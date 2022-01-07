@@ -172,9 +172,9 @@
             //addChild 要比 renderModal 先呼叫
             so.addChild("讀取文件並顯示資訊", 4, true);
             so.addChild("生成模型", 2, true);
-            so.addChild("閥值控制", 1, false);
-            so.addChild("文件下載", 1, false);
-            so.addChild("材質更換", 2, false);
+            so.addChild("閥值控制", 1, true);
+            so.addChild("文件下載", 1, true);
+            so.addChild("材質更換", 2, true);
 
             //產生自評表，參數如下所示
             so.renderModal(
@@ -244,7 +244,7 @@
                 if (files.length <= 0) {
                     return
                 }
-                let file = files[0];
+                let file = evt.target.files[0];
                 let filename = file.name;
                 
                 filename = filename.split('.');
@@ -266,12 +266,11 @@
                     if (byte == 'uint8') {
                         data = new Uint8Array(result);
                         // implementation
-                        paddingData = new Uint8Array(Math.pow(max, 3));
-
-                        modelView.databuffer = paddingData;
+                        // paddingData = new Uint8Array(max * max * max);
+                        modelView.databuffer = data;
                         modelView.size = max;
                         modelView.threshold = 75;
-                        modelView.loadData();
+                        modelView.updateModel();
                     }
                 }
 
@@ -283,23 +282,29 @@
                 let exporter = new STLExporter();
                 let mesh = modelView.download();
 
+                let result = exporter.parse(mesh, {binary: true})
+                let blob = new Blob([result], {type: 'application/octet-stream'})
+
                 let dlLink = document.createElement('a');
-                //implementation
-                modelView.loadData();
+                dlLink.href = URL.createObjectURL(blob);
+                dlLink.download = 'mode.stl'
+                
+                dlLink.click()
             })
 
             // 閥值設定
             elements[2].addEventListener('click', (evt) => {
                 let isovalue = evt.srcElement.value;
-                //implementation
-                modelView.loadData();
+                modelView.threshold = isovalue;
+                modelView.updateModel();
             })
 
             // 紋理設置
             elements[3].addEventListener('change', (evt) => {
                 let selectedTextureIndex = evt.srcElement.value;
                 //implementation
-                modelView.loadData();
+                modelView.textureOption = selectedTextureIndex;
+                modelView.updateModel();
             })
 
             // 模型網格顯示
